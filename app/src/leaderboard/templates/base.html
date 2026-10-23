@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Leaderboard{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.min.css" integrity="sha384-L1dWfspMTHU/ApYnFiMz2QID/PlP1xCW9visvBdbEkOLkSSWsP6ZJWhPw6apiXxU" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" integrity="sha384-OXVF05DQEe311p6ohU11NwlnX08FzMCsyoXzGOaL+83dKAb3qS17yZJxESl8YrJQ" crossorigin="anonymous">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script defer src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" integrity="sha384-d3UHjPdzJkZuk5H3qKYMLRyWLAQBJbby2yr2Q58hXXtAGF8RSNO9jpLDlKKPv5v3" crossorigin="anonymous"></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <nav class="site-nav container" aria-label="Main navigation">
+      <a class="brand" href="{{ url_for('index') }}">Scoreboard</a>
+      <ul>
+        <li><a href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}aria-current="page"{% endif %}>Recent matches</a></li>
+        <li><a href="{{ url_for('list_games') }}" {% if request.endpoint in ['list_games', 'get_game'] %}aria-current="page"{% endif %}>Games</a></li>
+        <li><a href="{{ url_for('list_players') }}" {% if request.endpoint in ['list_players', 'get_player'] %}aria-current="page"{% endif %}>Players</a></li>
+        <li><a href="{{ url_for('adder_dispatcher') }}" {% if request.endpoint == 'adder_dispatcher' %}aria-current="page"{% endif %}>Add data</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <section class="flash-messages" aria-label="Notifications">
+          {% for category, message in messages %}
+            <article class="flash-message {{ category }}" role="{{ 'alert' if category == 'error' else 'status' }}">
+              {{ message }}
+            </article>
+          {% endfor %}
+        </section>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer container">
+    <small>Scoreboard - {{ current_year }}</small>
+    <a href="{{ url_for('info') }}" {% if request.endpoint == 'info' %}aria-current="page"{% endif %}>Info</a>
+  </footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

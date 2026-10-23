@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Add data | Leaderboard{% endblock %}
+
+{% block content %}
+<header class="page-heading">
+	<p class="eyebrow">Manage scoreboard</p>
+	<h1>Add data</h1>
+</header>
+
+<div class="add-grid">
+	<article aria-labelledby="add-player-title">
+		<header>
+			<h2 id="add-player-title">New player</h2>
+		</header>
+	<form action="{{ url_for('new_player') }}" method="post">
+		<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+		<label for="player-name">Name</label>
+		<input id="player-name" name="name" type="text" placeholder="Player name" required>
+		<button type="submit">Create player</button>
+	</form>
+	</article>
+
+	<article aria-labelledby="add-game-title">
+		<header>
+			<h2 id="add-game-title">New game</h2>
+		</header>
+	<form action="{{ url_for('new_game') }}" method="post">
+		<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+		<label for="game-name">Name</label>
+		<input id="game-name" name="name" type="text" placeholder="Game name" required>
+		<label for="game-type">Game type</label>
+		<select id="game-type" name="is_collective" required>
+			<option value="false">Individual</option>
+			<option value="true">Team</option>
+		</select>
+		<button type="submit">Create game</button>
+	</form>
+	</article>
+
+	<article class="match-panel" aria-labelledby="add-match-title">
+		<header>
+			<h2 id="add-match-title">Record a match</h2>
+		</header>
+	<form action="{{ url_for('new_match') }}" method="post">
+		<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+		<label for="match-game">Game</label>
+		<select id="match-game" class="enhanced-select" name="game_id" required {% if not games %}disabled{% endif %}>
+			<option value="">Select a game</option>
+			{% for game in games %}
+				<option value="{{ game.id }}" data-collective="{{ game.is_collective|lower }}">{{ game.name }}</option>
+			{% endfor %}
+		</select>
+		<label for="opponent-match">Opponent match (optional)</label>
+		<select id="opponent-match" class="enhanced-select" name="opponent_match_id">
+			<option value="">No opponent match</option>
+			{% for match in matches %}
+				<option value="{{ match.id }}" data-game-id="{{ match.game_id }}">Match #{{ match.id }} (Game #{{ match.game_id }})</option>
+			{% endfor %}
+		</select>
+		<label id="global-score-field" for="global-score" hidden>
+			Total team score
+			<input id="global-score" name="collective_score" type="number" step="1" disabled>
+		</label>
+
+		<fieldset>
+			<legend>Players and scores</legend>
+			<div id="match-players">
+				<div class="match-player-row">
+					<label>Player
+						<select class="enhanced-select" name="players_id" required {% if not players %}disabled{% endif %}>
+							<option value="">Select a player</option>
+							{% for player in players %}
+								<option value="{{ player.id }}">{{ player.name }}</option>
+							{% endfor %}
+						</select>
+					</label>
+					<div class="individual-score-field">
+						<label>Score
+							<input name="players_score" type="number" step="1" required>
+						</label>
+					</div>
+					<button class="remove-player" type="button" aria-label="Remove player" disabled>Remove</button>
+				</div>
+			</div>
+		</fieldset>
+
+		<div class="match-actions">
+			<button id="add-player-row" class="secondary outline" type="button" {% if not players %}disabled{% endif %}>Add another player</button>
+			<button type="submit" {% if not games or not players %}disabled{% endif %}>Save match</button>
+		</div>
+	</form>
+	</article>
+</div>
+
+<template id="match-player-template">
+	<div class="match-player-row">
+		<label>Player
+			<select class="enhanced-select" name="players_id" required>
+				<option value="">Select a player</option>
+				{% for player in players %}
+					<option value="{{ player.id }}">{{ player.name }}</option>
+				{% endfor %}
+			</select>
+		</label>
+		<div class="individual-score-field">
+			<label>Score
+				<input name="players_score" type="number" step="1" required>
+			</label>
+		</div>
+		<button class="remove-player" type="button" aria-label="Remove player">Remove</button>
+	</div>
+</template>
+{% endblock content %}
+
+{% block scripts %}
+<script>
+	document.addEventListener("DOMContentLoaded", () => {
+	function initializeEnhancedSelects(container = document) {
+		if (!window.jQuery?.fn.select2) return;
+
+		$(container).find(".enhanced-select").each(function () {
+			if ($(this).hasClass("select2-hidden-accessible")) return;
+
+			$(this).select2({
+			width: "100%",
+				minimumResultsForSearch: 0,
+			});
+		});
+	}
+
+	initializeEnhancedSelects();
+
+	const playerRows = document.querySelector("#match-players");
+	const playerTemplate = document.querySelector("#match-player-template");
+	const gameSelect = document.querySelector("#match-game");
+	const globalScoreField = document.querySelector("#global-score-field");
+	const globalScoreInput = document.querySelector("#global-score");
+	const opponentMatchSelect = document.querySelector("#opponent-match");
+	const addPlayerButton = document.querySelector("#add-player-row");
+	const getScoreInputs = () => playerRows.querySelectorAll('input[name="players_score"]');
+
+	function updateScoreFields() {
+		const isCollective = gameSelect.selectedOptions[0]?.dataset.collective === "true";
+		const scoreInputs = getScoreInputs();
+		const selectedGameId = gameSelect.value;
+
+		[...opponentMatchSelect.options].slice(1).forEach((option) => {
+			const unavailable = !selectedGameId || option.dataset.gameId !== selectedGameId;
+			option.hidden = unavailable;
+			option.disabled = unavailable;
+			if (unavailable && option.selected) {
+				opponentMatchSelect.value = "";
+				opponentMatchSelect.dispatchEvent(new Event("change", { bubbles: true }));
+			}
+		});
+
+		globalScoreField.hidden = !isCollective;
+		globalScoreInput.disabled = !isCollective;
+		globalScoreInput.required = isCollective;
+
+		scoreInputs.forEach((input) => {
+			input.closest(".individual-score-field").hidden = isCollective;
+			input.required = !isCollective;
+		});
+
+	}
+
+	function addPlayerRow() {
+		const newRow = playerTemplate.content.firstElementChild.cloneNode(true);
+		playerRows.append(newRow);
+		initializeEnhancedSelects(newRow);
+		updateScoreFields();
+	}
+
+	function handlePlayerRowsClick(event) {
+		if (event.target.matches(".remove-player") && playerRows.children.length > 1) {
+			const row = event.target.closest(".match-player-row");
+			if (window.jQuery?.fn.select2) {
+				$(row).find(".enhanced-select").select2("destroy");
+			}
+			row.remove();
+			updateScoreFields();
+		}
+	}
+
+	gameSelect.addEventListener("change", updateScoreFields);
+	addPlayerButton.addEventListener("click", addPlayerRow);
+	playerRows.addEventListener("click", handlePlayerRowsClick);
+	updateScoreFields();
+	});
+</script>
+{% endblock scripts %}

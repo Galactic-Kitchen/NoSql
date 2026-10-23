@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Players | Leaderboard{% endblock %}
+
+{% block content %}
+<header class="page-heading">
+  <p class="eyebrow">Community</p>
+  <h1>Players</h1>
+</header>
+{% if players %}
+  <ul>
+    {% for player in players %}
+      <li>
+        <a href="{{ url_for('get_player', player_id=player.id) }}">{{ player.name }}</a>
+        <small class="record-meta">Player #{{ player.id }}</small>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No players have been added yet.</p>
+{% endif %}
+{% endblock %}

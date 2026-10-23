@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS players          (id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, name TEXT NOT NULL UNIQUE);
+CREATE TABLE IF NOT EXISTS games            (id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, name TEXT NOT NULL UNIQUE, is_collective boolean NOT NULL);
+CREATE TABLE IF NOT EXISTS matches          (id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE, opponent_match_id INTEGER REFERENCES matches(id), collective_score INTEGER);
+CREATE TABLE IF NOT EXISTS match_players    (match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE, player_id INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE, player_score INTEGER, PRIMARY KEY (match_id, player_id));
+CREATE INDEX IF NOT EXISTS match_players_player_match_idx ON match_players (player_id, match_id);

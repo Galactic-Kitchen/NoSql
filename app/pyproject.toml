@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "leaderboard"
+version = "0.1.0"
+description = "A game leaderboard application for a school project"
+requires-python = ">=3.13"
+dependencies = [
+    "Flask>=3.1",
+    "Flask-WTF>=1.2",
+    "gunicorn>=23.0",
+    "psycopg[binary]>=3.3",
+    "redis[hiredis]>=3.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pip-tools",
+    "ruff",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/leaderboard"]

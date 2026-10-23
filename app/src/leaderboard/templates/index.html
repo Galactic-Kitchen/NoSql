@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Recent matches | Leaderboard{% endblock %}
+
+{% block content %}
+<header class="page-heading">
+  <p class="eyebrow">Scoreboard</p>
+  <h1>Recent matches</h1>
+</header>
+{% if last_matches %}
+  <ul>
+    {% for match in last_matches %}
+      <li>
+        <a href="{{ url_for('get_match', match_id=match.id) }}">
+          Match #{{ match.id }}
+        </a>
+        <small class="record-meta">Game #{{ match.game_id }} · {{ match.players_id | length }} players</small>
+        {% if match.collective_score is not none %}
+          <small class="record-meta">Team score: {{ match.collective_score }}</small>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No matches have been recorded yet.</p>
+{% endif %}
+{% endblock %}

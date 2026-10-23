@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}{{ player.name }} | Leaderboard{% endblock %}
+
+{% block content %}
+<header class="page-heading">
+	<p class="eyebrow">Player profile · #{{ player.id }}</p>
+	<h1>{{ player.name }}</h1>
+</header>
+<section class="content-section">
+	<h2>Player details</h2>
+	<p class="record-meta">Player ID {{ player.id }}</p>
+</section>
+<section class="content-section" aria-labelledby="player-matches-title">
+	<h2 id="player-matches-title">Match history</h2>
+	{% if matches %}
+		<ul>
+			{% for match in matches %}
+				{% set player_index = match.players_id.index(player.id) %}
+				{% set game = games_by_id[match.game_id] %}
+				<li>
+					<a href="{{ url_for('get_match', match_id=match.id) }}">Match #{{ match.id }}</a>
+					<small class="record-meta">
+						<a href="{{ url_for('get_game', game_id=game.id) }}">{{ game.name }}</a>
+						· <mark>{{ "Collective" if game.is_collective else "Individual" }}</mark>
+						· Score {{ match.collective_score if game.is_collective else match.players_score[player_index] }}
+					</small>
+				</li>
+			{% endfor %}
+		</ul>
+	{% else %}
+		<p>This player has not played any matches yet.</p>
+	{% endif %}
+</section>
+{% endblock %}

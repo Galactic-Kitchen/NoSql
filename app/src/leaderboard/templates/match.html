@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Match {{ match.id }} | Leaderboard{% endblock %}
+
+{% block content %}
+<header class="page-heading">
+  <p class="eyebrow"><a href="{{ url_for('get_game', game_id=match.game_id) }}">{{ game.name }}</a> · {{ "Team match" if game.is_collective else "Individual match" }}</p>
+  <h1>Match #{{ match.id }}</h1>
+</header>
+<section class="content-section" aria-labelledby="scores-title">
+  <h2 id="scores-title">{{ "Players" if game.is_collective else "Scores" }}</h2>
+{% if game.is_collective %}
+  <ul>
+    {% for player in players %}
+      <li>{{ player.name }}</li>
+    {% endfor %}
+  </ul>
+  <article class="score-total"><span>Total team score</span><strong>{{ match.collective_score }}</strong></article>
+{% else %}
+  <ul>
+    {% for player in players %}
+      <li>{{ player.name }}: <strong>{{ match.players_score[loop.index0] }}</strong></li>
+    {% endfor %}
+  </ul>
+{% endif %}
+</section>
+{% if opponent %}
+<section class="content-section" aria-labelledby="opponents-title">
+  <h2 id="opponents-title">Opponent matches</h2>
+    <ul>
+      <li><a href="{{ url_for('get_match', match_id=opponent.id) }}">Match #{{ opponent.id }}</a></li>
+    </ul>
+</section>
+{% endif %}
+{% endblock %}

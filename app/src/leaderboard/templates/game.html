@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}{{ game.name }} Leaderboard{% endblock %}
+
+{% block content %}
+<header class="page-heading">
+  <p class="eyebrow">{{ "Team game" if game.is_collective else "Individual game" }} · Game #{{ game.id }}</p>
+  <h1>{{ game.name }}</h1>
+</header>
+<section class="content-section" aria-labelledby="recent-matches-title">
+  <h2 id="recent-matches-title">Recent matches</h2>
+{% if last_matches %}
+  <ul>
+    {% for match in last_matches %}
+      <li>
+        <a href="{{ url_for('get_match', match_id=match.id) }}">Match #{{ match.id }}</a>
+        <small class="record-meta">{{ match.players_id | length }} players</small>
+        {% if game.is_collective %}
+          <small class="record-meta">Team score: {{ match.collective_score }}</small>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No matches have been recorded for this game.</p>
+{% endif %}
+</section>
+{% endblock %}

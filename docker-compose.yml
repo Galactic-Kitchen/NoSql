@@ -1,0 +1,77 @@
+services:
+  redis:
+    image: redis:trixie
+    container_name: redis
+    restart: unless-stopped
+    networks:
+      - internal_network
+    volumes:
+      - redis_data:/data/
+      - ./redis:/etc/redis:ro
+    command: ["redis-server", "/etc/redis/redis.conf"]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+  
+  postgre:
+    image: postgres:trixie
+    container_name: postgre
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: "leaderboard"
+      APP_DB_USER: ${APP_DB_USER}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+    networks:
+      - internal_network
+    volumes:
+      - postgre_data:/var/lib/postgresql
+      - ./postgre/scripts/init.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
+      - ./postgre/sql/creation.sql:/docker-entrypoint-sql/creation.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build: ./app
+    container_name: web
+    stop_signal: SIGINT
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777
+
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgre:
+        condition: service_healthy
+
+    networks:
+      - internal_network
+      - frontend_network
+
+    environment:
+      FLASK_REDIS_URL: redis
+      FLASK_POSTGRE_URL: postgre
+      FLASK_POSTGRE_PASSWORD: ${APP_DB_PASSWORD}
+      FLASK_POSTGRE_USER: ${APP_DB_USER}
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
+
+    ports:
+      - "127.0.0.1:8000:8000"
+
+volumes:
+  redis_data:
+  postgre_data:
+  
+
+networks:
+  internal_network:
+    internal: true
+  frontend_network:
